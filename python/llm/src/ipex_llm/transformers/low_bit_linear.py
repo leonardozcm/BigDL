@@ -174,7 +174,7 @@ def ggml_convert_qtype(tensor: torch.Tensor, qtype: int,
         return dst_tensor
 
 
-def ggml_q_format_convet_cpu2xpu(tensor: torch.Tensor, num_elem: int, qtype: int):
+def ggml_q_format_convet_cpu2xpu(tensor: torch.Tensor, w: int, h: int, qtype: int):
     if qtype == NF4:
         invalidInputError(tensor.dtype == torch.bfloat16,
                           "NF4 Input tensor must be bfloat16")
@@ -186,6 +186,7 @@ def ggml_q_format_convet_cpu2xpu(tensor: torch.Tensor, num_elem: int, qtype: int
                       "Input tensor must be on cpu")
 
     src = ctypes.c_void_p(tensor.data.data_ptr())
+    num_elem = w * h
 
     if qtype in [SYM_INT4, ASYM_INT4, SYM_INT8, NF4, NF3, FP4, FP6, FP8E4, FP8E5,
                  Q4_K, Q6_K, FP6_K, WOQ_INT4]:
@@ -199,7 +200,7 @@ def ggml_q_format_convet_cpu2xpu(tensor: torch.Tensor, num_elem: int, qtype: int
     else:
         return tensor
     dst = ctypes.c_void_p(dst_tensor.data.data_ptr())
-    ggml.ggml_q_format_convet_cpu2xpu(src, dst, num_elem, qtype)
+    ggml.ggml_q_format_convet_cpu2xpu(src, dst, w, h, qtype)
     return dst_tensor
 
 
@@ -421,7 +422,8 @@ class FP4Params(torch.nn.Parameter):
             # enter xpu logic, compile linear_int4 extension at first time
             self.quantize("cpu")  # tensor is cpu now
             self.data = ggml_q_format_convet_cpu2xpu(self.data,
-                                                     reduce(mul, self._shape, 1),
+                                                     self._shape[1],
+                                                     self._shape[0],
                                                      self.qtype)
             new_param = FP4Params(super().to(device=device,
                                              dtype=dtype,

@@ -1102,15 +1102,17 @@ _lib.ggml_dequantize.restype = None
 def ggml_q_format_convet_cpu2xpu(
     src: ctypes.c_void_p,
     dst: ctypes.c_void_p,
-    n: ctypes.c_size_t,
+    w: ctypes.c_size_t,
+    h: ctypes.c_size_t,
     qtype: ctypes.c_int
 ):
-    _lib.ggml_q_format_convet_cpu2xpu(src, dst, n, qtype)
+    _lib.ggml_q_format_convet_cpu2xpu(src, dst, w, h, qtype)
 
 
 _lib.ggml_q_format_convet_cpu2xpu.argtypes = [
     ctypes.c_void_p,
     ctypes.c_void_p,
+    ctypes.c_size_t,
     ctypes.c_size_t,
     ctypes.c_int,
 ]
